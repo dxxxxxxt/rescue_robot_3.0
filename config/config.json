@@ -1,0 +1,14 @@
+{
+  "team_color": "red",
+  
+  "camera": {
+    "device_id": 0,
+    "width": 640,
+    "height": 480
+  },
+
+  "serial": {
+    "port": "/dev/ttyS3",
+    "baudrate": 115200
+  }
+}
