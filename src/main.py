@@ -26,9 +26,17 @@ cmd = "0"
 
 # 初始化摄像头和串口
 cap = cv2.VideoCapture(camera_id)
+if not cap.isOpened():
+    print(f"摄像头 {camera_id} 打开失败")
+    exit(1)
+
+# 设置摄像头参数
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
 
 print(f"队伍: {team_color}, 开始!!!!!!!!!!!!")
-
+print("等待电控指令.........................................")
 
 try:
     while True:
@@ -36,79 +44,98 @@ try:
         cmd_data = UART.read_ecu_command()
         if cmd_data:
                 # 假设电控发送的是单个字符，如 "1", "2", "3", "4"
-                cmd = cmd_data[0] if cmd_data else "0"
+                cmd = str( cmd_data[0] )if cmd_data else "0"
                 print(f"收到指令: cmd={cmd}")
     
         ret, frame = cap.read()
         if not ret:
+            print("读取帧失败")
+            time.sleep(0.1)
             break
     
         frame_width = frame.shape[1]
         frame_height = frame.shape[0]
 
+       
         # 重置变量
-        balls = []
-        safe_zone = None
+        target_found = False
     
         #识别
         if cmd == "1":
             # 找红球
             balls = vision.find_balls(frame, "red")
+            if balls:
+                x, y, r = balls[0]
+                dx, dy = vision.calculate_offset(x, y)
+                dist = vision.calculate_distance(r)
+                UART.send_data(dx, dy, dist)
+                target_found = True
+                print(f"找到红球: dx={dx}, dy={dy}, dist={dist}")
         elif cmd == "2":
             # 找蓝球
             balls = vision.find_balls(frame, "blue")
-        elif cmd == "3" and safe_zone:
+            if balls:
+                x, y, r = balls[0]
+                dx, dy = vision.calculate_offset(x, y)
+                dist = vision.calculate_distance(r)
+                UART.send_data(dx, dy, dist)
+                target_found = True
+                print(f"找到蓝球: dx={dx}, dy={dy}, dist={dist}")
+        elif cmd == "3" :
             # 处理红安全区
-            x, y = safe_zone  # 注意：现在只有两个值
-            dx, dy = vision.calculate_offset(x, y)
-            UART.send_data(dx, dy, 0)
-            first_grab = False
-        elif cmd == "4" and safe_zone:
+            safe_zone = vision.find_safe_zone(frame, "red")  
+            if safe_zone:
+                x, y = safe_zone  
+                dx, dy = vision.calculate_offset(x, y)
+                UART.send_data(dx, dy, 0)
+                target_found = True
+                print(f"找到红安全区: dx={dx}, dy={dy}")
+                if first_grab:
+                    first_grab = False
+                    print("第一次抓取完成，切换到多目标识别模式")
+        elif cmd == "4" :
             # 处理蓝安全区
-            x, y = safe_zone  # 注意：现在只有两个值
-            dx, dy = vision.calculate_offset(x, y)
-            UART.send_data(dx, dy, 0)
-            first_grab = False
-        else:
-            balls = vision.find_balls(frame, "red")
-            balls = vision.find_balls(frame, "blue")
-            balls = vision.find_balls(frame, "yellow")
-            balls = vision.find_balls(frame, "black")
+            safe_zone = vision.find_safe_zone(frame, "blue")  
+            if safe_zone:
+                x, y = safe_zone  
+                dx, dy = vision.calculate_offset(x, y)
+                UART.send_data(dx, dy, 0)
+                target_found = True
+                print(f"找到蓝安全区: dx={dx}, dy={dy}")
+                if first_grab:
+                    first_grab = False
+                    print("第一次抓取完成，切换到多目标识别模式")
+        elif not first_grab:
+            # 尝试识别各种颜色的小球
+            colors_to_check = ["red", "blue", "yellow", "black"]
+            for color in colors_to_check:
+                balls = vision.find_balls(frame, color)
+                if balls:
+                    x, y, r = balls[0]
+                    dx, dy = vision.calculate_offset(x, y)
+                    dist = vision.calculate_distance(r)
+                    UART.send_data(dx, dy, dist)
+                    target_found = True
+                    print(f"识别到{color}色小球: dx={dx}, dy={dy}, dist={dist}")
+                    break
+    
 
-        
-        #发送数据
-        if (cmd in ["1", "2"] or cmd == "0") and balls:
-            # 处理小球
-            x, y, r = balls[0]
-            dx, dy = vision.calculate_offset(x, y)
-            dist = vision.calculate_distance(r)
-            UART.send_data(dx, dy, dist)
-        elif cmd == "3" and safe_zone:
-            # 处理红安全区
-            x, y, _ = safe_zone
-            dx, dy = vision.calculate_offset(x, y)
-            UART.send_data(dx, dy, 0)
-        elif cmd == "4" and safe_zone:
-            # 处理蓝安全区
-            x, y, _ = safe_zone
-            dx, dy = vision.calculate_offset(x, y)
-            UART.send_data(dx, dy, 0)
-        elif first_grab == False:
-            #识别哪个就发送哪个
-            x, y, r = balls[0]
-            dx, dy = vision.calculate_offset(x, y)
-            dist = vision.calculate_distance(r)
-            UART.send_data(dx, dy, dist)
-        else:
-            # 没找到
+        # 没有找到目标时发送无目标信号
+        if not target_found:
             UART.send_no_target()
+            print("未找到目标")
             
         
             
 except KeyboardInterrupt:
     print("\n用户中断")
+except Exception as e:
+    print(f"程序出错: {e}")
+    import traceback
+    traceback.print_exc()  # 添加了堆栈跟踪
 finally:
     cap.release()
+    cv2.destroyAllWindows()
     UART.close_serial()
     print("程序结束")
     
