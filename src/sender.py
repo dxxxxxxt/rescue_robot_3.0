@@ -73,7 +73,7 @@ class VideoStreaming(object):
 
 
 if __name__ == '__main__':
-    # TODO: 将下面IP地址改为发送端的IP地址
+    #  将下面IP地址改为发送端的IP地址
     # host, port
     host = '192.168.43.211'
     port = 8000
