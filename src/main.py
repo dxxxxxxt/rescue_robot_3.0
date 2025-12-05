@@ -4,6 +4,14 @@ import json
 import UART
 import vision
 
+"""
+小车启动,此时电控会发小球和安全区，接收电控发的数据,1为红色小球,2为蓝色小球,3为红色安全区,4为蓝色安全区,
+根据电控发的数据判断现在小车要发送什么数据,当识别到目标时发送坐标,如果没有识别到就一直发0,
+当first_grab = False时,识别到哪个小球就发送哪个小球坐标,此时电控只发安全区,等待电控指令，
+当电控发送数据时,开始识别安全区并返回安全区坐标给电控,小球到达安全区后又开始识别小球
+
+"""
+
 # 加载配置
 with open('config/config.json', 'r') as f:
     config = json.load(f)
@@ -42,7 +50,7 @@ try:
         balls = []
         safe_zone = None
     
-    
+        #识别
         if cmd == "1":
             # 找红球
             balls = vision.find_balls(frame, "red")
@@ -53,36 +61,47 @@ try:
             # 找红安全区
             safe_zone = vision.find_safe_zone(frame, "red")
             balls = []
+            first_grab = False
         elif cmd == "4":
             # 找蓝安全区
             safe_zone = vision.find_safe_zone(frame, "blue")
             balls = []
+            first_grab = False
         else:
-            # 自动找己方球
-            balls = vision.find_balls(frame, team_color)
+            balls = vision.find_balls(frame, "red")
+            balls = vision.find_balls(frame, "blue")
+            balls = vision.find_balls(frame, "yellow")
+            balls = vision.find_balls(frame, "black")
 
+        
+        #发送数据
         if (cmd in ["1", "2"] or cmd == "0") and balls:
             # 处理小球
             x, y, r = balls[0]
             dx, dy = vision.calculate_offset(x, y)
             dist = vision.calculate_distance(r)
-            ball_id = 1 if cmd == "1" or (cmd == "0" and team_color == "red") else 2
-            UART.send_data(dx, dy, dist, ball_id)
+            UART.send_data(dx, dy, dist)
         elif cmd == "3" and safe_zone:
             # 处理红安全区
             x, y, _ = safe_zone
             dx, dy = vision.calculate_offset(x, y)
-            UART.send_data(dx, dy, 0, 5)
+            UART.send_data(dx, dy, 0)
         elif cmd == "4" and safe_zone:
             # 处理蓝安全区
             x, y, _ = safe_zone
             dx, dy = vision.calculate_offset(x, y)
-            UART.send_data(dx, dy, 0, 6)
+            UART.send_data(dx, dy, 0)
+        elif first_grab == False:
+            #识别哪个就发送哪个
+            x, y, r = balls[0]
+            dx, dy = vision.calculate_offset(x, y)
+            dist = vision.calculate_distance(r)
+            UART.send_data(dx, dy, dist)
         else:
             # 没找到
             UART.send_no_target()
             
-        time.sleep(0.1)
+        
             
 except KeyboardInterrupt:
     print("\n用户中断")

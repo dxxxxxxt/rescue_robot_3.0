@@ -1,14 +1,9 @@
 import serial
 import time
-# 红色小球=1
-# 蓝色小球=2
-# 黄色小球=3
-# 黑色小球=4
-# 红色安全区=5
-# 蓝色安全区=6
 
 ser = serial.Serial('/dev/ttyS3', 115200)
 print("串口已初始化并打开")
+
 def read_ecu_command():
     """读取电控发送的数组信号"""
     try:
@@ -26,13 +21,13 @@ def read_ecu_command():
         print(f"接收数据出错: {e}")
         return None
 
-def send_data(dx, dy, distance, ball_id):
+def send_data(dx, dy, distance):
     """
     发送 ASCII 字符串给 STM32
     格式: "dx:100 dy:200 dis:200 id:1"
     """
     # 构造严格匹配 scanf 的字符串
-    msg = f"dx:{dx} dy:{dy} dis:{distance} id:{ball_id}\n"
+    msg = f"dx:{dx} dy:{dy} dis:{distance} \n"
     
     # 发送 ASCII 字节
     ser.write(msg.encode('ascii'))
@@ -40,7 +35,7 @@ def send_data(dx, dy, distance, ball_id):
 
 def send_no_target():
     """没有看到目标时发送0"""
-    msg = "dx:0 dy:0 dis:0 id:0"
+    msg = "dx:0 dy:0 dis:0 "
     ser.write(msg.encode('ascii'))
     print(f"发送: '{msg}' (无目标)")
 
