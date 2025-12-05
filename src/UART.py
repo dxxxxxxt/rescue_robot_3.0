@@ -14,8 +14,8 @@ def read_ecu_command():
         
         if ser.in_waiting > 0:
             cmd = ser.read(ser.in_waiting).decode('utf-8').strip()
-            print(f"收到电控信号: {list(cmd)}")
-            return list(cmd)  # 返回数组格式
+            print(f"收到电控信号: {cmd}")
+            return cmd
         return None
     except Exception as e:
         print(f"接收数据出错: {e}")
@@ -27,15 +27,15 @@ def send_data(dx, dy, distance):
     格式: "dx:100 dy:200 dis:200 id:1"
     """
     # 构造严格匹配 scanf 的字符串
-    msg = f"dx:{dx} dy:{dy} dis:{distance} \n"
+    msg = f"dx:{dx} dy:{dy} dis:{distance}\n"
     
     # 发送 ASCII 字节
     ser.write(msg.encode('ascii'))
-    print(f"发送: '{msg}'")
+    print(f"发送: '{msg.strip()}'")
 
 def send_no_target():
     """没有看到目标时发送0"""
-    msg = "dx:0 dy:0 dis:0 "
+    msg = "dx:0 dy:0 dis:0\n"
     ser.write(msg.encode('ascii'))
     print(f"发送: '{msg}' (无目标)")
 
