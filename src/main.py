@@ -57,15 +57,17 @@ try:
         elif cmd == "2":
             # 找蓝球
             balls = vision.find_balls(frame, "blue")
-        elif cmd == "3":
-            # 找红安全区
-            safe_zone = vision.find_safe_zone(frame, "red")
-            balls = []
+        elif cmd == "3" and safe_zone:
+            # 处理红安全区
+            x, y = safe_zone  # 注意：现在只有两个值
+            dx, dy = vision.calculate_offset(x, y)
+            UART.send_data(dx, dy, 0)
             first_grab = False
-        elif cmd == "4":
-            # 找蓝安全区
-            safe_zone = vision.find_safe_zone(frame, "blue")
-            balls = []
+        elif cmd == "4" and safe_zone:
+            # 处理蓝安全区
+            x, y = safe_zone  # 注意：现在只有两个值
+            dx, dy = vision.calculate_offset(x, y)
+            UART.send_data(dx, dy, 0)
             first_grab = False
         else:
             balls = vision.find_balls(frame, "red")
