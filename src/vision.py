@@ -53,11 +53,14 @@ def find_balls(frame, color_name):
 # 1. 检测紫色围栏，当识别到大面积紫色区域时，判断它为安全区
 # 2. 检测紫色围栏里面的长方形颜色，当识别到长方形颜色与队伍颜色一致时，判断它为己方安全区
 
-def find_safe_zone(frame, team_color):
-    """检测安全区 - 返回 (x坐标, y坐标)"""
+def find_safe_zone(frame, safe_zone_color):
+    """检测安全区 - 返回 (x坐标, y坐标)
+    safe_zone_color: "red" 或 "blue"，指定要检测的安全区颜色
+    """
     try:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         
+        # 1. 检测紫色围栏
         # 加载紫色（围栏）配置
         purple_config = load_color("purple")
         lower_purple = np.array(purple_config["lower"])
@@ -66,26 +69,56 @@ def find_safe_zone(frame, team_color):
         # 创建紫色掩码
         mask_purple = cv2.inRange(hsv, lower_purple, upper_purple)
         
-        # 形态学操作
+        # 形态学操作 - 闭运算填充缺口
         kernel = np.ones((5, 5), np.uint8)
         mask_purple = cv2.morphologyEx(mask_purple, cv2.MORPH_CLOSE, kernel)
         
-        # 寻找轮廓
-        contours, _ = cv2.findContours(mask_purple, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # 寻找紫色围栏轮廓
+        contours_purple, _ = cv2.findContours(mask_purple, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
-        if contours:
-            # 找到最大的紫色区域
-            largest_contour = max(contours, key=cv2.contourArea)
-            area = cv2.contourArea(largest_contour)
+        if contours_purple:
+            # 找到最大的紫色区域（围栏）
+            largest_purple_contour = max(contours_purple, key=cv2.contourArea)
+            purple_area = cv2.contourArea(largest_purple_contour)
             
-            if area > 1000:  # 安全区应该有较大面积
-                # 计算中心点
-                M = cv2.moments(largest_contour)
-                if M["m00"] != 0:
-                    cx = int(M["m10"] / M["m00"])
-                    cy = int(M["m01"] / M["m00"])
+            if purple_area > 1000:  # 安全区围栏应该有较大面积
+                # 创建围栏区域的掩码（只保留围栏内的区域）
+                fence_mask = np.zeros(frame.shape[:2], dtype=np.uint8)
+                cv2.drawContours(fence_mask, [largest_purple_contour], -1, 255, -1)
+                
+                # 2. 检测围栏内的指定颜色区域（红色或蓝色安全区）
+                # 加载安全区颜色配置
+                color_config = load_color(safe_zone_color)
+                lower_color = np.array(color_config["lower"])
+                upper_color = np.array(color_config["upper"])
+                
+                # 创建颜色掩码
+                mask_color = cv2.inRange(hsv, lower_color, upper_color)
+                
+                # 只保留围栏内的颜色区域
+                mask_color_inside_fence = cv2.bitwise_and(mask_color, mask_color, mask=fence_mask)
+                
+                # 形态学操作 - 去除噪声
+                mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_OPEN, kernel)
+                mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_CLOSE, kernel)
+                
+                # 寻找颜色区域轮廓
+                contours_color, _ = cv2.findContours(mask_color_inside_fence, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                
+                if contours_color:
+                    # 找到最大的颜色区域
+                    largest_color_contour = max(contours_color, key=cv2.contourArea)
+                    color_area = cv2.contourArea(largest_color_contour)
                     
-                    return (cx, cy)  # 只返回两个值：x, y
+                    # 检查颜色区域是否足够大
+                    if color_area > 200:  # 可根据实际情况调整
+                        # 计算颜色区域的中心点（即安全区中心点）
+                        M = cv2.moments(largest_color_contour)
+                        if M["m00"] != 0:
+                            cx = int(M["m10"] / M["m00"])
+                            cy = int(M["m01"] / M["m00"])
+                            
+                            return (cx, cy)  # 只返回两个值：x, y
         
         return None  # 或者返回 (0, 0)
         
