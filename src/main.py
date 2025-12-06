@@ -41,13 +41,12 @@ print("等待电控指令.........................................")
 try:
     while True:
         # 读取电控数据
-        cmd_data = UART.read_ecu_command()
-        if cmd_data:
-                # 假设电控发送的是单个字符，如 "1", "2", "3", "4"
-                cmd = str( cmd_data[0] )if cmd_data else "0"
-                print(f"收到指令: cmd={cmd}")
+        cmd = UART.read_ecu_command()
+        
+        print(f"收到指令: cmd={cmd}")
     
         ret, frame = cap.read()
+        
         if not ret:
             print("读取帧失败")
             time.sleep(0.1)
@@ -135,7 +134,6 @@ except Exception as e:
     traceback.print_exc()  # 添加了堆栈跟踪
 finally:
     cap.release()
-    cv2.destroyAllWindows()
     UART.close_serial()
     print("程序结束")
     

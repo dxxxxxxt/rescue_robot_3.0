@@ -47,12 +47,12 @@ def close_serial():
 
 #-----------------------------------------------------------------------------------------------
 # 测试1
-if ser and ser.is_open:
-    print("串口已初始化并打开")
-    while True:
-        # cmd=ser.read().decode('utf-8')
-        # print(f"收到电控数据: {cmd}")
-        send_data(100, 200, 200) 
+# if ser and ser.is_open:
+#     print("串口已初始化并打开")
+#     while True:
+#         # cmd=ser.read().decode('utf-8')
+#         # print(f"收到电控数据: {cmd}")
+#         send_data(100, 200, 200) 
 
 # # 测试2
 # try:
