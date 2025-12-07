@@ -114,7 +114,8 @@ try:
                 if balls:
                     x, y, r = balls[0]
                     dx, dy = vision.calculate_offset(x, y)
-                    dist = vision.calculate_distance(r)
+                    raw_dist = vision.calculate_distance(r)
+                    dist = vision.smooth_distance(raw_dist)
                     UART.send_data(dx, dy, dist)
                     time.sleep(0.1)
                     target_found = True
@@ -128,10 +129,10 @@ try:
             
 except KeyboardInterrupt:
     print("\n用户中断")
-except Exception as e:
-    print(f"程序出错: {e}")
-    import traceback
-    traceback.print_exc()  # 添加了堆栈跟踪
+# except Exception as e:
+#     print(f"程序出错: {e}")
+#     import traceback
+#     traceback.print_exc()  # 添加了堆栈跟踪
 finally:
     cap.release()
     UART.close_serial()
