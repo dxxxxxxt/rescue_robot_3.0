@@ -176,4 +176,3 @@ def show_frame(frame, balls, target_ball=None):
         cv2.putText(frame, "目标", (x, y-30), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
     
-    cv2.imshow('视觉检测', frame)
