@@ -7,22 +7,51 @@ def load_color(color_name):
     try:
         with open(f'config/hsv_thresholds_{color_name}.json', 'r') as f:
             config = json.load(f)
-            # 转换格式
-            lower = [config["H Min"], config["S Min"], config["V Min"]]
-            upper = [config["H Max"], config["S Max"], config["V Max"]]
-            return {"lower": lower, "upper": upper}
-    except:
-        print(f"找不到 {color_name} 的配置文件")
-        return {"lower": [0,0,0], "upper": [180,255,255]}
+            
+            # 检查配置是否为双区间结构
+            if "range1" in config and "range2" in config and "common" in config:
+                # 双区间结构（适用于红色等跨0°的颜色）
+                range1 = {
+                    "lower": [config["range1"]["H Min"], config["common"]["S Min"], config["common"]["V Min"]],
+                    "upper": [config["range1"]["H Max"], config["common"]["S Max"], config["common"]["V Max"]]
+                }
+                range2 = {
+                    "lower": [config["range2"]["H Min"], config["common"]["S Min"], config["common"]["V Min"]],
+                    "upper": [config["range2"]["H Max"], config["common"]["S Max"], config["common"]["V Max"]]
+                }
+                return {"range1": range1, "range2": range2, "is_double_range": True}
+            else:
+                # 单区间结构（适用于大多数颜色）
+                lower = [config["H Min"], config["S Min"], config["V Min"]]
+                upper = [config["H Max"], config["S Max"], config["V Max"]]
+                return {"lower": lower, "upper": upper, "is_double_range": False}
+    except Exception as e:
+        print(f"找不到 {color_name} 的配置文件或格式错误: {e}")
+        return {"lower": [0,0,0], "upper": [180,255,255], "is_double_range": False}
 
 # 检测颜色小球
 def find_balls(frame, color_name):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     color_config = load_color(color_name)
     
-    lower = np.array(color_config["lower"])
-    upper = np.array(color_config["upper"])
-    mask = cv2.inRange(hsv, lower, upper)
+    # 根据配置类型创建掩码
+    if color_config["is_double_range"]:
+        # 双区间处理（如红色）
+        lower1 = np.array(color_config["range1"]["lower"])
+        upper1 = np.array(color_config["range1"]["upper"])
+        mask1 = cv2.inRange(hsv, lower1, upper1)
+        
+        lower2 = np.array(color_config["range2"]["lower"])
+        upper2 = np.array(color_config["range2"]["upper"])
+        mask2 = cv2.inRange(hsv, lower2, upper2)
+        
+        # 合并两个区间的掩码
+        mask = cv2.bitwise_or(mask1, mask2)
+    else:
+        # 单区间处理
+        lower = np.array(color_config["lower"])
+        upper = np.array(color_config["upper"])
+        mask = cv2.inRange(hsv, lower, upper)
 
     # 形态学操作，去除噪声
     kernel = np.ones((3, 3), np.uint8)
@@ -89,11 +118,25 @@ def find_safe_zone(frame, safe_zone_color):
             # 2. 检测围栏内的指定颜色区域（红色或蓝色安全区）
             # 加载安全区颜色配置
             color_config = load_color(safe_zone_color)
-            lower_color = np.array(color_config["lower"])
-            upper_color = np.array(color_config["upper"])
+            
+            # 根据配置类型创建掩码
+            if color_config["is_double_range"]:
+                # 双区间处理（如红色）
+                lower1 = np.array(color_config["range1"]["lower"])
+                upper1 = np.array(color_config["range1"]["upper"])
+                mask1 = cv2.inRange(hsv, lower1, upper1)
                 
-            # 创建颜色掩码
-            mask_color = cv2.inRange(hsv, lower_color, upper_color)
+                lower2 = np.array(color_config["range2"]["lower"])
+                upper2 = np.array(color_config["range2"]["upper"])
+                mask2 = cv2.inRange(hsv, lower2, upper2)
+                
+                # 合并两个区间的掩码
+                mask_color = cv2.bitwise_or(mask1, mask2)
+            else:
+                # 单区间处理
+                lower_color = np.array(color_config["lower"])
+                upper_color = np.array(color_config["upper"])
+                mask_color = cv2.inRange(hsv, lower_color, upper_color)
                 
             # 只保留围栏内的颜色区域
             mask_color_inside_fence = cv2.bitwise_and(mask_color, mask_color, mask=fence_mask)

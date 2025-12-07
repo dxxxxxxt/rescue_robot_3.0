@@ -30,13 +30,32 @@ class DistanceTester:
         try:
             with open(f'config/hsv_thresholds_{color_name}.json', 'r') as f:
                 config = json.load(f)
-                lower = [config["H Min"], config["S Min"], config["V Min"]]
-                upper = [config["H Max"], config["S Max"], config["V Max"]]
-                return {"lower": lower, "upper": upper}
+                
+                # 检查配置是否为双区间结构
+                if "range1" in config and "range2" in config and "common" in config:
+                    # 双区间结构（适用于红色等跨0°的颜色）
+                    range1 = {
+                        "lower": [config["range1"]["H Min"], config["common"]["S Min"], config["common"]["V Min"]],
+                        "upper": [config["range1"]["H Max"], config["common"]["S Max"], config["common"]["V Max"]]
+                    }
+                    range2 = {
+                        "lower": [config["range2"]["H Min"], config["common"]["S Min"], config["common"]["V Min"]],
+                        "upper": [config["range2"]["H Max"], config["common"]["S Max"], config["common"]["V Max"]]
+                    }
+                    return {"range1": range1, "range2": range2, "is_double_range": True}
+                else:
+                    # 单区间结构（适用于大多数颜色）
+                    lower = [config["H Min"], config["S Min"], config["V Min"]]
+                    upper = [config["H Max"], config["S Max"], config["V Max"]]
+                    return {"lower": lower, "upper": upper, "is_double_range": False}
         except Exception as e:
             print(f"找不到 {color_name} 的配置文件: {e}")
-            # 返回默认的红色配置
-            return {"lower": [0, 100, 100], "upper": [10, 255, 255]}
+            # 返回默认的红色配置（双区间）
+            return {
+                "range1": {"lower": [0, 100, 100], "upper": [10, 255, 255]},
+                "range2": {"lower": [169, 100, 100], "upper": [180, 255, 255]},
+                "is_double_range": True
+            }
     
     def calculate_distance(self, ball_radius):
         """计算距离"""
@@ -59,9 +78,24 @@ class DistanceTester:
         """检测目标物体"""
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         
-        lower = np.array(self.color_config["lower"])
-        upper = np.array(self.color_config["upper"])
-        mask = cv2.inRange(hsv, lower, upper)
+        # 根据配置类型创建掩码
+        if self.color_config["is_double_range"]:
+            # 双区间处理（如红色）
+            lower1 = np.array(self.color_config["range1"]["lower"])
+            upper1 = np.array(self.color_config["range1"]["upper"])
+            mask1 = cv2.inRange(hsv, lower1, upper1)
+            
+            lower2 = np.array(self.color_config["range2"]["lower"])
+            upper2 = np.array(self.color_config["range2"]["upper"])
+            mask2 = cv2.inRange(hsv, lower2, upper2)
+            
+            # 合并两个区间的掩码
+            mask = cv2.bitwise_or(mask1, mask2)
+        else:
+            # 单区间处理
+            lower = np.array(self.color_config["lower"])
+            upper = np.array(self.color_config["upper"])
+            mask = cv2.inRange(hsv, lower, upper)
         
         # 形态学操作
         kernel = np.ones((3, 3), np.uint8)
