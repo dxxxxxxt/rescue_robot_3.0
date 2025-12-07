@@ -138,30 +138,34 @@ def calculate_offset(x, y, frame_width=640, frame_height=480):
     return x_offset, y_offset
 
 # 计算目标距离（基于相似三角形原理）
-def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0, frame_width=640):
+def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0, focal_length=None):
     """
     通过小球在图像中的大小估算实际距离
-    ball_radius: 小球在图像中的半径(像素)
-    camera_fov: 摄像头视野角度(度)
-    ball_real_diameter: 小球真实直径(厘米)
-    frame_width: 图像宽度(像素)
-    """
-    # 将FOV角度转换为弧度（这是水平方向的总FOV）
-    fov_rad = np.radians(camera_fov)
     
-    if ball_radius > 0:
-        # 小球在图像中的直径(像素)
-        pixel_diameter = ball_radius * 2
-        
-        # 计算视场角的一半对应的正切值
-        tan_half_fov = np.tan(fov_rad / 2)
-        
-        # 更准确的距离估算公式
-        # 原理：物体在图像中的尺寸与其实际尺寸的比例 = 视场角中物体所占角度比例
-        distance = (ball_real_diameter * frame_width) / (2 * pixel_diameter * tan_half_fov)
-        
-        return int(distance)
-    return 100  # 默认距离
+    参数:
+        ball_radius: 小球在图像中的半径(像素)
+        camera_fov: 摄像头视野角度(度) - 备用参数
+        ball_real_diameter: 小球真实直径(厘米)
+        focal_length: 标定的焦距(像素) - 使用你测得的727.8
+    """
+    frame_width = 640  # 图像宽度
+    
+    if ball_radius <= 0:
+        return 100  # 默认距离
+    
+    pixel_diameter = ball_radius * 2
+    
+    # 优先使用标定的焦距（更准确）
+    if focal_length is not None:
+        # 使用小孔成像公式：距离 = (实际直径 × 焦距) / 像素直径
+        distance = (ball_real_diameter * focal_length) / pixel_diameter
+    else:
+        # 备用：使用FOV公式
+        fov_rad = np.radians(camera_fov / 2)
+        distance = (ball_real_diameter * frame_width) / (2 * pixel_diameter * np.tan(fov_rad))
+    
+    return int(distance)
+
 
 
 # 显示检测结果
