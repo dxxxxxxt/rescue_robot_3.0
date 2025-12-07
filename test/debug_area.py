@@ -62,7 +62,7 @@ def main():
             
             # 在控制台输出
             if area > 50:  # 只显示显著轮廓
-                status = "✅ 在范围内" if min_area <= area <= max_area else "❌ 超出范围"
+                status = "在范围内" if min_area <= area <= max_area else "❌ 超出范围"
                 print(f"轮廓{i+1}: 面积={int(area)} {status}")
         
         # 显示参数

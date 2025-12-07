@@ -52,10 +52,6 @@ try:
             time.sleep(0.1)
             break
     
-        frame_width = frame.shape[1]
-        frame_height = frame.shape[0]
-
-       
         # 重置变量
         target_found = False
     
@@ -68,6 +64,7 @@ try:
                 dx, dy = vision.calculate_offset(x, y)
                 dist = vision.calculate_distance(r)
                 UART.send_data(dx, dy, dist)
+                time.sleep(0.1)
                 target_found = True
                 print(f"找到红球: dx={dx}, dy={dy}, dist={dist}")
         elif cmd == "2":
@@ -78,6 +75,7 @@ try:
                 dx, dy = vision.calculate_offset(x, y)
                 dist = vision.calculate_distance(r)
                 UART.send_data(dx, dy, dist)
+                time.sleep(0.1)
                 target_found = True
                 print(f"找到蓝球: dx={dx}, dy={dy}, dist={dist}")
         elif cmd == "3" :
@@ -87,6 +85,7 @@ try:
                 x, y = safe_zone  
                 dx, dy = vision.calculate_offset(x, y)
                 UART.send_data(dx, dy, 0)
+                time.sleep(0.1)
                 target_found = True
                 print(f"找到红安全区: dx={dx}, dy={dy}")
                 if first_grab:
@@ -99,6 +98,7 @@ try:
                 x, y = safe_zone  
                 dx, dy = vision.calculate_offset(x, y)
                 UART.send_data(dx, dy, 0)
+                time.sleep(0.1)
                 target_found = True
                 print(f"找到蓝安全区: dx={dx}, dy={dy}")
                 if first_grab:
@@ -114,17 +114,15 @@ try:
                     dx, dy = vision.calculate_offset(x, y)
                     dist = vision.calculate_distance(r)
                     UART.send_data(dx, dy, dist)
+                    time.sleep(0.1)
                     target_found = True
                     print(f"识别到{color}色小球: dx={dx}, dy={dy}, dist={dist}")
                     break
-    
-
         # 没有找到目标时发送无目标信号
         if not target_found:
             UART.send_no_target()
+            time.sleep(0.1)
             print("未找到目标")
-            
-        
             
 except KeyboardInterrupt:
     print("\n用户中断")

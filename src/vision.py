@@ -41,7 +41,7 @@ def find_balls(frame, color_name):
             perimeter = cv2.arcLength(cnt, True)
             if perimeter > 0:
                 circularity = 4 * np.pi * area / (perimeter * perimeter)
-                if circularity > 0.6:  # 圆形度阈值，过滤非圆形物体
+                if circularity > 0.7:  # 圆形度阈值，过滤非圆形物体
                     balls.append((int(x), int(y), int(radius)))
     
 
@@ -176,4 +176,3 @@ def show_frame(frame, balls, target_ball=None):
         cv2.putText(frame, "目标", (x, y-30), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
     
-    cv2.imshow('视觉检测', frame)
