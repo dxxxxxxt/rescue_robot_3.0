@@ -157,14 +157,3 @@ class SmartCalibrator:
         
         return avg_focal, fov
 
-# 使用示例
-if __name__ == "__main__":
-    calibrator = SmartCalibrator()
-    result = calibrator.calibrate_with_live_video()
-    
-    if result:
-        focal, fov = result
-        print(f"\n使用这些参数进行距离测量:")
-        print(f"焦距 = {focal:.1f}")
-        print(f"实际直径 = 4.0")
-        print(f"距离公式: 距离 = (4.0 * {focal:.1f}) / (检测到的像素直径)")
