@@ -57,74 +57,72 @@ def find_safe_zone(frame, safe_zone_color):
     """检测安全区 - 返回 (x坐标, y坐标)
     safe_zone_color: "red" 或 "blue"，指定要检测的安全区颜色
     """
-    try:
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         
-        # 1. 检测紫色围栏
-        # 加载紫色（围栏）配置
-        purple_config = load_color("purple")
-        lower_purple = np.array(purple_config["lower"])
-        upper_purple = np.array(purple_config["upper"])
+    # 1. 检测紫色围栏
+    # 加载紫色（围栏）配置
+    purple_config = load_color("purple")
+    lower_purple = np.array(purple_config["lower"])
+    upper_purple = np.array(purple_config["upper"])
         
-        # 创建紫色掩码
-        mask_purple = cv2.inRange(hsv, lower_purple, upper_purple)
+    # 创建紫色掩码
+    mask_purple = cv2.inRange(hsv, lower_purple, upper_purple)
         
-        # 形态学操作 - 闭运算填充缺口
-        kernel = np.ones((5, 5), np.uint8)
-        mask_purple = cv2.morphologyEx(mask_purple, cv2.MORPH_CLOSE, kernel)
+    # 形态学操作 - 闭运算填充缺口
+    kernel = np.ones((5, 5), np.uint8)
+    mask_purple = cv2.morphologyEx(mask_purple, cv2.MORPH_CLOSE, kernel)
         
-        # 寻找紫色围栏轮廓
-        contours_purple, _ = cv2.findContours(mask_purple, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # 寻找紫色围栏轮廓
+    contours_purple, _ = cv2.findContours(mask_purple, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
-        if contours_purple:
-            # 找到最大的紫色区域（围栏）
-            largest_purple_contour = max(contours_purple, key=cv2.contourArea)
-            purple_area = cv2.contourArea(largest_purple_contour)
+    if contours_purple:
+        # 找到最大的紫色区域（围栏）
+        largest_purple_contour = max(contours_purple, key=cv2.contourArea)
+        purple_area = cv2.contourArea(largest_purple_contour)
             
-            if purple_area > 1000:  # 安全区围栏应该有较大面积
-                # 创建围栏区域的掩码（只保留围栏内的区域）
-                fence_mask = np.zeros(frame.shape[:2], dtype=np.uint8)
-                cv2.drawContours(fence_mask, [largest_purple_contour], -1, 255, -1)
+        if purple_area > 1000:  # 安全区围栏应该有较大面积
+            # 创建围栏区域的掩码（只保留围栏内的区域）
+            fence_mask = np.zeros(frame.shape[:2], dtype=np.uint8)
+            cv2.drawContours(fence_mask, [largest_purple_contour], -1, 255, -1)
                 
-                # 2. 检测围栏内的指定颜色区域（红色或蓝色安全区）
-                # 加载安全区颜色配置
-                color_config = load_color(safe_zone_color)
-                lower_color = np.array(color_config["lower"])
-                upper_color = np.array(color_config["upper"])
+            # 2. 检测围栏内的指定颜色区域（红色或蓝色安全区）
+            # 加载安全区颜色配置
+            color_config = load_color(safe_zone_color)
+            lower_color = np.array(color_config["lower"])
+            upper_color = np.array(color_config["upper"])
                 
-                # 创建颜色掩码
-                mask_color = cv2.inRange(hsv, lower_color, upper_color)
+            # 创建颜色掩码
+            mask_color = cv2.inRange(hsv, lower_color, upper_color)
                 
-                # 只保留围栏内的颜色区域
-                mask_color_inside_fence = cv2.bitwise_and(mask_color, mask_color, mask=fence_mask)
+            # 只保留围栏内的颜色区域
+            mask_color_inside_fence = cv2.bitwise_and(mask_color, mask_color, mask=fence_mask)
                 
-                # 形态学操作 - 去除噪声
-                mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_OPEN, kernel)
-                mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_CLOSE, kernel)
+            # 形态学操作 - 去除噪声
+            mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_OPEN, kernel)
+            mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_CLOSE, kernel)
                 
-                # 寻找颜色区域轮廓
-                contours_color, _ = cv2.findContours(mask_color_inside_fence, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # 寻找颜色区域轮廓
+            contours_color, _ = cv2.findContours(mask_color_inside_fence, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 
-                if contours_color:
-                    # 找到最大的颜色区域
-                    largest_color_contour = max(contours_color, key=cv2.contourArea)
-                    color_area = cv2.contourArea(largest_color_contour)
+            if contours_color:
+                # 找到最大的颜色区域
+                largest_color_contour = max(contours_color, key=cv2.contourArea)
+                color_area = cv2.contourArea(largest_color_contour)
                     
-                    # 检查颜色区域是否足够大
-                    if color_area > 200:  # 可根据实际情况调整
-                        # 计算颜色区域的中心点（即安全区中心点）
-                        M = cv2.moments(largest_color_contour)
-                        if M["m00"] != 0:
-                            cx = int(M["m10"] / M["m00"])
-                            cy = int(M["m01"] / M["m00"])
+                # 检查颜色区域是否足够大
+                if color_area > 200:  # 可根据实际情况调整
+                    # 计算颜色区域的中心点（即安全区中心点）
+                    M = cv2.moments(largest_color_contour)
+                    if M["m00"] != 0:
+                        cx = int(M["m10"] / M["m00"])
+                        cy = int(M["m01"] / M["m00"])
                             
-                            return (cx, cy)  # 只返回两个值：x, y
+                        return (cx, cy)  # 只返回两个值：x, y
         
-        return None  # 或者返回 (0, 0)
+    return None  # 或者返回 (0, 0)
         
-    except Exception as e:
-        print(f"find_safe_zone 错误: {e}")
-        return None
+    
 
 # 计算相对图像中心的偏移量
 def calculate_offset(x, y, frame_width=640, frame_height=480):
@@ -140,23 +138,31 @@ def calculate_offset(x, y, frame_width=640, frame_height=480):
     return x_offset, y_offset
 
 # 计算目标距离（基于相似三角形原理）
-def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0):
+def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0, frame_width=640):
     """
     通过小球在图像中的大小估算实际距离
     ball_radius: 小球在图像中的半径(像素)
     camera_fov: 摄像头视野角度(度)
     ball_real_diameter: 小球真实直径(厘米)
+    frame_width: 图像宽度(像素)
     """
-    frame_width = 640  # 图像宽度
-    fov_rad = np.radians(camera_fov / 2)
+    # 将FOV角度转换为弧度（这是水平方向的总FOV）
+    fov_rad = np.radians(camera_fov)
     
     if ball_radius > 0:
         # 小球在图像中的直径(像素)
         pixel_diameter = ball_radius * 2
-        # 估算距离(厘米)
-        distance = (ball_real_diameter * frame_width) / (2 * pixel_diameter * np.tan(fov_rad))
+        
+        # 计算视场角的一半对应的正切值
+        tan_half_fov = np.tan(fov_rad / 2)
+        
+        # 更准确的距离估算公式
+        # 原理：物体在图像中的尺寸与其实际尺寸的比例 = 视场角中物体所占角度比例
+        distance = (ball_real_diameter * frame_width) / (2 * pixel_diameter * tan_half_fov)
+        
         return int(distance)
     return 100  # 默认距离
+
 
 # 显示检测结果
 def show_frame(frame, balls, target_ball=None):
