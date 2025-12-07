@@ -137,6 +137,10 @@ def calculate_offset(x, y, frame_width=640, frame_height=480):
     
     return x_offset, y_offset
 
+# 距离历史记录，用于平滑滤波
+distance_history = []
+window_size = 5  # 滑动窗口大小
+
 # 计算目标距离（基于相似三角形原理）
 def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0, focal_length=None):
     """
@@ -148,7 +152,6 @@ def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0, focal
         ball_real_diameter: 小球真实直径(厘米)
         focal_length: 标定的焦距(像素) - 使用你测得的727.8
     """
-    frame_width = 640  # 图像宽度
     
     if ball_radius <= 0:
         return 100  # 默认距离
@@ -160,11 +163,39 @@ def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0, focal
         # 使用小孔成像公式：距离 = (实际直径 × 焦距) / 像素直径
         distance = (ball_real_diameter * focal_length) / pixel_diameter
     else:
-        # 备用：使用FOV公式
-        fov_rad = np.radians(camera_fov / 2)
+        # 使用相似三角形原理计算距离
+        frame_width = 640  # 图像宽度
+        fov_rad = np.radians(camera_fov / 2)  # 视野角度的一半（弧度）
         distance = (ball_real_diameter * frame_width) / (2 * pixel_diameter * np.tan(fov_rad))
     
     return int(distance)
+
+# 距离平滑滤波函数
+def smooth_distance(distance):
+    """
+    使用滑动窗口平均法平滑距离值
+    
+    参数:
+        distance: 当前测量的距离值
+    
+    返回:
+        平滑后的距离值
+    """
+    global distance_history
+    
+    # 添加当前距离到历史记录
+    distance_history.append(distance)
+    
+    # 保持历史记录长度不超过窗口大小
+    if len(distance_history) > window_size:
+        distance_history.pop(0)
+    
+    # 计算平均值作为平滑后的距离
+    if distance_history:
+        smoothed_distance = int(np.mean(distance_history))
+        return smoothed_distance
+    
+    return distance
 
 
 

@@ -62,7 +62,8 @@ try:
             if balls:
                 x, y, r = balls[0]
                 dx, dy = vision.calculate_offset(x, y)
-                dist = vision.calculate_distance(r)
+                raw_dist = vision.calculate_distance(r)
+                dist = vision.smooth_distance(raw_dist)
                 UART.send_data(dx, dy, dist)
                 time.sleep(0.1)
                 target_found = True
@@ -73,7 +74,8 @@ try:
             if balls:
                 x, y, r = balls[0]
                 dx, dy = vision.calculate_offset(x, y)
-                dist = vision.calculate_distance(r)
+                raw_dist = vision.calculate_distance(r)
+                dist = vision.smooth_distance(raw_dist)
                 UART.send_data(dx, dy, dist)
                 time.sleep(0.1)
                 target_found = True
