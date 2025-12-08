@@ -63,17 +63,19 @@ def find_balls(frame, color_name):
     balls = []
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if 31 < area < 1000:   #轮廓面积：可能需要调整
+        # 面积筛选范围放宽，适应远近和方便调试
+        if 10 < area :
             (x, y), radius = cv2.minEnclosingCircle(cnt)
-
-            # 圆形度检查，确保是近似圆形
             perimeter = cv2.arcLength(cnt, True)
             if perimeter > 0:
                 circularity = 4 * np.pi * area / (perimeter * perimeter)
-                if circularity > 0.7:  # 圆形度阈值，过滤非圆形物体
+                # 可调试输出
+                print(f"area={area:.1f}, radius={radius:.1f}, circularity={circularity:.2f}")
+                # 半径范围和圆形度筛选
+                if circularity > 0.65 and 5 < radius < 60:
                     balls.append((int(x), int(y), int(radius)))
-    
-
+    # 如果检测到多个球，可以选择面积最大的那个返回
+    balls = sorted(balls, key=lambda b: b[2], reverse=True)  # 按半径降序排序
     return balls
 
 # 寻找安全区

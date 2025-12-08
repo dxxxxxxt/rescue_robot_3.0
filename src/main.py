@@ -50,6 +50,10 @@ try:
             print("读取帧失败")
             time.sleep(0.1)
             break
+        frame = cv2.flip(frame, 0)
+        
+        # 翻转图像（解决画面倒置问题）
+        frame = cv2.flip(frame, 0)  # 0=垂直翻转（上下颠倒）
     
         # 重置变量
         target_found = False
