@@ -1,10 +1,43 @@
 import cv2
 import sys
 import os
+import numpy as np
 
 # 添加src目录到Python路径，以便导入vision模块
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 import vision
+
+# 生成颜色掩码的辅助函数
+def generate_color_mask(frame, color_name):
+    """生成颜色掩码"""
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    color_config = vision.load_color(color_name)
+    
+    # 根据配置类型创建掩码
+    if color_config["is_double_range"]:
+        # 双区间处理（如红色）
+        lower1 = np.array(color_config["range1"]["lower"])
+        upper1 = np.array(color_config["range1"]["upper"])
+        mask1 = cv2.inRange(hsv, lower1, upper1)
+        
+        lower2 = np.array(color_config["range2"]["lower"])
+        upper2 = np.array(color_config["range2"]["upper"])
+        mask2 = cv2.inRange(hsv, lower2, upper2)
+        
+        # 合并两个区间的掩码
+        mask = cv2.bitwise_or(mask1, mask2)
+    else:
+        # 单区间处理
+        lower = np.array(color_config["lower"])
+        upper = np.array(color_config["upper"])
+        mask = cv2.inRange(hsv, lower, upper)
+
+    # 形态学操作，去除噪声
+    kernel = np.ones((3, 3), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    
+    return mask
 
 
 def main():
@@ -13,8 +46,9 @@ def main():
     target_color = "black"  # 目标颜色（red/blue/yellow/black）
     frame_width = 640
     frame_height = 480
-    flip_image = True  # 是否翻转图像（解决画面倒置问题）
+    flip_image = False  # 是否翻转图像（解决画面倒置问题）
     flip_mode = 0  # 翻转模式：0=垂直翻转（上下颠倒）, 1=水平翻转（左右颠倒）, -1=垂直和水平翻转
+    show_mask = True  # 是否显示掩码视频
     
     # 初始化摄像头
     cap = cv2.VideoCapture(camera_id)
@@ -40,6 +74,9 @@ def main():
             # 翻转图像（解决画面倒置问题）
             if flip_image:
                 frame = cv2.flip(frame, flip_mode)
+            
+            # 生成掩码（用于调试显示）
+            mask = generate_color_mask(frame, target_color)
             
             # 检测小球
             balls = vision.find_balls(frame, target_color)
@@ -76,6 +113,10 @@ def main():
             
             # 显示图像
             cv2.imshow("小球距离测量", frame)
+            
+            # 显示掩码视频
+            if show_mask:
+                cv2.imshow(f"{target_color} 掩码", mask)
             
             # 按 'q' 退出
             if cv2.waitKey(1) & 0xFF == ord('q'):
