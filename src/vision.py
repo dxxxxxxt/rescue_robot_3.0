@@ -64,7 +64,7 @@ def find_balls(frame, color_name):
     for cnt in contours:
         area = cv2.contourArea(cnt)
         # 面积筛选范围放宽，适应远近和方便调试
-        if 10 < area :
+        if 10 < area :  #放开面积的上限1000
             (x, y), radius = cv2.minEnclosingCircle(cnt)
             perimeter = cv2.arcLength(cnt, True)
             if perimeter > 0:
@@ -72,7 +72,7 @@ def find_balls(frame, color_name):
                 # 可调试输出
                 print(f"area={area:.1f}, radius={radius:.1f}, circularity={circularity:.2f}")
                 # 半径范围和圆形度筛选
-                if circularity > 0.65 and 5 < radius < 60:
+                if circularity > 0.65 and 5 < radius :  #放开半径的上限60
                     balls.append((int(x), int(y), int(radius)))
     # 如果检测到多个球，可以选择面积最大的那个返回
     balls = sorted(balls, key=lambda b: b[2], reverse=True)  # 按半径降序排序
