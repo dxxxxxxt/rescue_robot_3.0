@@ -12,28 +12,35 @@
 ## 项目结构
 
 ```
-rescue_vision_2.0/
-├── .gitignore
-├── README.md
-├── .vscode/
-├── config/
-│   ├── config.json
-│   ├── hsv_thresholds_black.json
-│   ├── hsv_thresholds_red.json
-│   ├── hsv_thresholds_blue.json
-│   └── hsv_thresholds_yellow.json
-├── src/
-│   ├── UART.py
-│   ├── main.py
-│   ├── vision.py
-│   ├── sender.py
-│   └── trans.py
-└── tests/
-    ├── 紫色阈值.py
-    ├── 红色阈值.py
-    ├── 蓝色阈值.py
-    ├── 黄色阈值.py
-    └── 黑色阈值.py
+rescue_vision_3.0/
+└── rescue_robot_3.0/
+    ├── .gitignore
+    ├── README.md
+    ├── config/
+    │   ├── config.json
+    │   ├── hsv_thresholds_black.json
+    │   ├── hsv_thresholds_red.json
+    │   ├── hsv_thresholds_blue.json
+    │   ├── hsv_thresholds_yellow.json
+    │   └── hsv_thresholds_purple.json
+    ├── src/
+    │   ├── UART.py
+    │   ├── main.py
+    │   ├── vision.py
+    │   └── sender.py
+    ├── test/
+    │   ├── debug_area.py
+    │   ├── measure_safe_zone.py
+    │   ├── 圆形度阈值测试.py
+    │   ├── 测量焦距.py
+    │   ├── 紫色阈值.py
+    │   ├── 红色阈值.py
+    │   ├── 红色阈值2.0.py
+    │   ├── 蓝色阈值.py
+    │   ├── 黄色阈值.py
+    │   └── 黑色阈值.py
+    ├── local_ball_distance_tester.py
+    └── local_distance_tester.py
 ```
 
 ## 配置说明
@@ -63,6 +70,13 @@ rescue_vision_2.0/
 距离计算
 3. 主程序 (main.py)
 读取电控发的数据，根据数据进行状态判断，并执行相应的操作
+4. 本地测试工具 (local_ball_distance_tester.py)
+本地测试小球检测功能
+实时显示摄像头画面和颜色掩码视频
+测量小球距离和偏移量
+支持通过show_mask参数控制掩码视频显示
+5. 本地距离测试工具 (local_distance_tester.py)
+本地测试距离测量功能
 
 ## 注意事项
 1. 串口通信模块需要根据实际情况进行修改，如串口名称、波特率等
