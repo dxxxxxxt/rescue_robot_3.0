@@ -50,7 +50,7 @@ try:
             print("读取帧失败")
             time.sleep(0.1)
             break
-        frame = cv2.flip(frame, 0)
+       
         
         # 翻转图像（解决画面倒置问题）
         frame = cv2.flip(frame, 0)  # 0=垂直翻转（上下颠倒）
@@ -63,7 +63,7 @@ try:
             # 找红球
             balls = vision.find_balls(frame, "red")
             if balls:
-                x, y, r = balls[0]
+                x, y, r = max(balls, key=lambda b: b[2])
                 dx, dy = vision.calculate_offset(x, y)
                 raw_dist = vision.calculate_distance(r)
                 dist = vision.smooth_distance(raw_dist)
@@ -75,7 +75,7 @@ try:
             # 找蓝球
             balls = vision.find_balls(frame, "blue")
             if balls:
-                x, y, r = balls[0]
+                x, y, r = max(balls, key=lambda b: b[2])
                 dx, dy = vision.calculate_offset(x, y)
                 raw_dist = vision.calculate_distance(r)
                 dist = vision.smooth_distance(raw_dist)
@@ -115,7 +115,7 @@ try:
             for color in colors_to_check:
                 balls = vision.find_balls(frame, color)
                 if balls:
-                    x, y, r = balls[0]
+                    x, y, r = max(balls, key=lambda b: b[2])
                     dx, dy = vision.calculate_offset(x, y)
                     raw_dist = vision.calculate_distance(r)
                     dist = vision.smooth_distance(raw_dist)
