@@ -21,8 +21,7 @@ camera_id = config["camera"]["device_id"]
 
 #初始化变量
 first_grab = True     # 是否是第一次抓取
-has_yellow = False    # 是否已经抓了黄球
-cmd = "0"
+cmd = "0"  # 初始命令
 
 # 初始化摄像头和串口
 cap = cv2.VideoCapture(camera_id)
@@ -44,7 +43,7 @@ try:
         cmd = UART.read_ecu_command()
         
         print(f"收到指令: cmd={cmd}")
-    
+        
         ret, frame = cap.read()
         
         if not ret:
@@ -129,10 +128,10 @@ try:
             
 except KeyboardInterrupt:
     print("\n用户中断")
-# except Exception as e:
-#     print(f"程序出错: {e}")
-#     import traceback
-#     traceback.print_exc()  # 添加了堆栈跟踪
+except Exception as e:
+    print(f"程序出错: {e}")
+    import traceback
+    traceback.print_exc()  # 添加了堆栈跟踪
 finally:
     cap.release()
     UART.close_serial()

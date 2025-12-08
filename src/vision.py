@@ -185,7 +185,7 @@ distance_history = []
 window_size = 5  # 滑动窗口大小
 
 # 计算目标距离（基于相似三角形原理）
-def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0, focal_length=None):
+def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0, focal_length=727.8):
     """
     通过小球在图像中的大小估算实际距离
     
@@ -193,7 +193,7 @@ def calculate_distance(ball_radius, camera_fov=60, ball_real_diameter=4.0, focal
         ball_radius: 小球在图像中的半径(像素)
         camera_fov: 摄像头视野角度(度) - 备用参数
         ball_real_diameter: 小球真实直径(厘米)
-        focal_length: 标定的焦距(像素) - 使用你测得的727.8
+        focal_length: 标定的焦距(像素) - 727.8
     """
     
     if ball_radius <= 0:
@@ -233,12 +233,19 @@ def smooth_distance(distance):
     if len(distance_history) > window_size:
         distance_history.pop(0)
     
-    # 计算平均值作为平滑后的距离
-    if distance_history:
+    # 如果历史记录数量足够，可以去除异常值
+    if len(distance_history) >= 3:
+        dists = sorted(distance_history)
+        # 去除最大最小值（可选，根据实际情况决定是否使用）
+        dists_filtered = dists[1:-1]  # 去除最大最小
+        smoothed_distance = int(np.mean(dists_filtered))
+        return smoothed_distance
+    else:
+        # 如果数量不足就直接计算平均值
         smoothed_distance = int(np.mean(distance_history))
         return smoothed_distance
     
-    return distance
+   
 
 
 
