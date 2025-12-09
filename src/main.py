@@ -85,30 +85,30 @@ try:
                 print(f"找到蓝球: dx={dx}, dy={dy}, dist={dist}")
         elif cmd == "3" :
             # 处理红安全区
-            safe_zone = vision.find_safe_zone(frame, "red")  
-            if safe_zone:
-                x, y = safe_zone  
+            centers = vision.find_safe_zones(frame, "red")
+            if centers:
+                x, y = centers[0]  # 取第一个安全区中心
                 dx, dy = vision.calculate_offset(x, y)
                 UART.send_data(dx, dy, 0)
                 time.sleep(0.1)
                 target_found = True
                 print(f"找到红安全区: dx={dx}, dy={dy}")
-                if first_grab:
-                    first_grab = False
-                    print("第一次抓取完成，切换到多目标识别模式")
+            if first_grab:
+                first_grab = False
+                print("第一次抓取完成，切换到多目标识别模式")
         elif cmd == "4" :
             # 处理蓝安全区
-            safe_zone = vision.find_safe_zone(frame, "blue")  
-            if safe_zone:
-                x, y = safe_zone  
+            centers = vision.find_safe_zones(frame, "blue")
+            if centers:
+                x, y = centers[0]  # 取第一个安全区中心
                 dx, dy = vision.calculate_offset(x, y)
                 UART.send_data(dx, dy, 0)
                 time.sleep(0.1)
                 target_found = True
-                print(f"找到蓝安全区: dx={dx}, dy={dy}")
-                if first_grab:
-                    first_grab = False
-                    print("第一次抓取完成，切换到多目标识别模式")
+                print(f"找到红安全区: dx={dx}, dy={dy}")
+            if first_grab:
+                first_grab = False
+                print("第一次抓取完成，切换到多目标识别模式")
         elif not first_grab:
             # 尝试识别各种颜色的小球
             colors_to_check = ["red", "blue", "yellow", "black"]

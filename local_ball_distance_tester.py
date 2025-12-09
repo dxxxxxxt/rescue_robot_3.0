@@ -43,7 +43,7 @@ def generate_color_mask(frame, color_name):
 def main():
     # 配置参数
     camera_id = 0  # 摄像头ID
-    target_color = "black"  # 目标颜色（red/blue/yellow/black）
+    target_color = "red"  # 目标颜色（red/blue/yellow/black）
     frame_width = 640
     frame_height = 480
     flip_image = True  # 是否翻转图像（解决画面倒置问题）
