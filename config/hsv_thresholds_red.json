@@ -1,10 +1,10 @@
 {
   "range1": {
     "H Min": 0,
-    "H Max": 7
+    "H Max": 10
   },
   "range2": {
-    "H Min": 175,
+    "H Min": 170,
     "H Max": 180
   },
   "common": {
