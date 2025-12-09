@@ -85,6 +85,8 @@ def print_thresholds():
     print(f"Lower: [{h_min}, {s_min}, {v_min}]")
     print(f"Upper: [{h_max}, {s_max}, {v_max}]")
 
+
+
 # 加载保存的配置
 load_thresholds()
 
@@ -120,8 +122,8 @@ while True:
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     
-    # 反转掩码，使黑色小球在掩码中显示为白色，便于观察
-    mask = cv2.bitwise_not(mask)
+    # # 反转掩码，使黑色小球在掩码中显示为白色，便于观察
+    # mask = cv2.bitwise_not(mask)
     
     result = cv2.bitwise_and(frame, frame, mask=mask)
 
