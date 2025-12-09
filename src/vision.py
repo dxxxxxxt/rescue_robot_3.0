@@ -5,7 +5,10 @@ import json
 # 加载颜色配置
 def load_color(color_name):
     try:
-        with open(f'config/hsv_thresholds_{color_name}.json', 'r') as f:
+        import os
+        # 使用绝对路径加载配置文件
+        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', f'hsv_thresholds_{color_name}.json')
+        with open(config_path, 'r') as f:
             config = json.load(f)
             
             # 检查配置是否为双区间结构
