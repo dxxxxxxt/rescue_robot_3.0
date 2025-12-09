@@ -87,67 +87,37 @@ def find_balls(frame, color_name):
 # 1. 检测紫色围栏，当识别到大面积紫色区域时，判断它为安全区
 # 2. 检测紫色围栏里面的长方形颜色，当识别到长方形颜色与队伍颜色一致时，判断它为己方安全区
 
-def find_safe_zone(frame, safe_zone_color):
-    """检测安全区 - 返回 (x坐标, y坐标)
-    safe_zone_color: "red" 或 "blue"，指定要检测的安全区颜色
-    """
-    
+def find_safe_zones(frame, safe_zone_color, min_area=2000):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        
-    
-                
-    #  检测围栏内的指定颜色区域（红色或蓝色安全区）
-    # 加载安全区颜色配置
     color_config = load_color(safe_zone_color)
-            
-    # 根据配置类型创建掩码
+    #双区间
     if color_config["is_double_range"]:
-        # 双区间处理（如红色）
         lower1 = np.array(color_config["range1"]["lower"])
         upper1 = np.array(color_config["range1"]["upper"])
         mask1 = cv2.inRange(hsv, lower1, upper1)
-                
         lower2 = np.array(color_config["range2"]["lower"])
         upper2 = np.array(color_config["range2"]["upper"])
         mask2 = cv2.inRange(hsv, lower2, upper2)
-                
-        # 合并两个区间的掩码
-        mask_color = cv2.bitwise_or(mask1, mask2)
+        mask = cv2.bitwise_or(mask1, mask2)
+    #单区间    
     else:
-        # 单区间处理
-        lower_color = np.array(color_config["lower"])
-        upper_color = np.array(color_config["upper"])
-        mask_color = cv2.inRange(hsv, lower_color, upper_color)
-                
-    # 只保留围栏内的颜色区域
-    mask_color_inside_fence = cv2.bitwise_and(mask_color, mask_color, mask=fence_mask)
-                
-    # 形态学操作 - 去除噪声
-    mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_OPEN, kernel)
-    mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_CLOSE, kernel)
-                
-    # 寻找颜色区域轮廓
-    contours_color, _ = cv2.findContours(mask_color_inside_fence, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                
-    if contours_color:
-        # 找到最大的颜色区域
-        largest_color_contour = max(contours_color, key=cv2.contourArea)
-        color_area = cv2.contourArea(largest_color_contour)
-                    
-    # 检查颜色区域是否足够大
-    if color_area > 200:  # 可根据实际情况调整
-    # 计算颜色区域的中心点（即安全区中心点）
-        M = cv2.moments(largest_color_contour)
-        if M["m00"] != 0:
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
-                            
-            return (cx, cy)  # 只返回两个值：x, y
-        
-    return None  # 或者返回 (0, 0)
-        
+        lower = np.array(color_config["lower"])
+        upper = np.array(color_config["upper"])
+        mask = cv2.inRange(hsv, lower, upper)
     
-
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,9))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    centers = []
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area > min_area:
+            M = cv2.moments(cnt)
+            if M["m00"] != 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+                centers.append((cx, cy))
+    return centers  # 只返回安全区所有中心点坐标列表
 # 计算相对图像中心的偏移量
 def calculate_offset(x, y, frame_width=640, frame_height=480):
     center_x = frame_width // 2
