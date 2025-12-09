@@ -1,8 +1,8 @@
 {
   "H Min": 0,
   "S Min": 0,
-  "V Min": 120,
-  "H Max": 20,
-  "S Max": 255,
-  "V Max": 255
+  "V Min": 0,
+  "H Max": 179,
+  "S Max": 66,
+  "V Max": 68
 }
