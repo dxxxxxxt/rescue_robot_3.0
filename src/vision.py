@@ -118,6 +118,7 @@ def find_safe_zones(frame, safe_zone_color, min_area=2000):
                 cy = int(M["m01"] / M["m00"])
                 centers.append((cx, cy))
     return centers  # 只返回安全区所有中心点坐标列表
+
 # 计算相对图像中心的偏移量
 def calculate_offset(x, y, frame_width=640, frame_height=480):
     center_x = frame_width // 2

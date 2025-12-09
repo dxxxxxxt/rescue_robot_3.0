@@ -64,29 +64,21 @@ def main():
             
             if current_mode in [1, 3]:
                 # 检测红色安全区
-                red_safe_zone = vision.find_safe_zone(frame, "red")
-                if red_safe_zone:
-                    safe_zones.append((red_safe_zone, "red"))
-                    # 打印红色安全区坐标
-                    if len(red_safe_zone) == 6:
-                        cx, cy, rect_x, rect_y, rect_w, rect_h = red_safe_zone
-                        print(f"检测到红色安全区: 中心点({cx}, {cy}), 矩形区域({rect_x}, {rect_y}, {rect_w}, {rect_h})")
-                    elif len(red_safe_zone) == 2:
-                        x, y = red_safe_zone
-                        print(f"检测到红色安全区: 坐标({x}, {y})")
+                red_safe_zones = vision.find_safe_zones(frame, "red")
+                if red_safe_zones:
+                    for i, (x, y) in enumerate(red_safe_zones):
+                        safe_zones.append(((x, y), "red"))
+                        # 打印红色安全区坐标
+                        print(f"检测到红色安全区 {i+1}: 坐标({x}, {y})")
                     
             if current_mode in [2, 3]:
                 # 检测蓝色安全区
-                blue_safe_zone = vision.find_safe_zone(frame, "blue")
-                if blue_safe_zone:
-                    safe_zones.append((blue_safe_zone, "blue"))
-                    # 打印蓝色安全区坐标
-                    if len(blue_safe_zone) == 6:
-                        cx, cy, rect_x, rect_y, rect_w, rect_h = blue_safe_zone
-                        print(f"检测到蓝色安全区: 中心点({cx}, {cy}), 矩形区域({rect_x}, {rect_y}, {rect_w}, {rect_h})")
-                    elif len(blue_safe_zone) == 2:
-                        x, y = blue_safe_zone
-                        print(f"检测到蓝色安全区: 坐标({x}, {y})")
+                blue_safe_zones = vision.find_safe_zones(frame, "blue")
+                if blue_safe_zones:
+                    for i, (x, y) in enumerate(blue_safe_zones):
+                        safe_zones.append(((x, y), "blue"))
+                        # 打印蓝色安全区坐标
+                        print(f"检测到蓝色安全区 {i+1}: 坐标({x}, {y})")
             
             # 在原始画面上标记安全区
             for safe_zone, color in safe_zones:
