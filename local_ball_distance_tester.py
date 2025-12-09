@@ -46,7 +46,7 @@ def main():
     target_color = "black"  # 目标颜色（red/blue/yellow/black）
     frame_width = 640
     frame_height = 480
-    flip_image = False  # 是否翻转图像（解决画面倒置问题）
+    flip_image = True  # 是否翻转图像（解决画面倒置问题）
     flip_mode = 0  # 翻转模式：0=垂直翻转（上下颠倒）, 1=水平翻转（左右颠倒）, -1=垂直和水平翻转
     show_mask = True  # 是否显示掩码视频
     
