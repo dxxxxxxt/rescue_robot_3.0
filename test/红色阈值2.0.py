@@ -180,7 +180,7 @@ while True:
     ret, frame = cap.read()
     if not ret:
         continue
-    
+    frame = cv2.flip(frame, 0)
     frame_copy = frame.copy()
     
     # 获取当前阈值

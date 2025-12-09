@@ -101,7 +101,7 @@ while True:
     ret, frame = cap.read()
     if not ret:
         continue
-
+    frame = cv2.flip(frame, 0)
     # 获取当前阈值
     h_min = cv2.getTrackbarPos('H Min', window_name)
     s_min = cv2.getTrackbarPos('S Min', window_name)
