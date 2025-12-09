@@ -94,79 +94,55 @@ def find_safe_zone(frame, safe_zone_color):
     
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         
-    # 1. 检测紫色围栏
-    # 加载紫色（围栏）配置
-    purple_config = load_color("purple")
-    lower_purple = np.array(purple_config["lower"])
-    upper_purple = np.array(purple_config["upper"])
-        
-    # 创建紫色掩码
-    mask_purple = cv2.inRange(hsv, lower_purple, upper_purple)
-        
-    # 形态学操作 - 闭运算填充缺口
-    kernel = np.ones((5, 5), np.uint8)
-    mask_purple = cv2.morphologyEx(mask_purple, cv2.MORPH_CLOSE, kernel)
-        
-    # 寻找紫色围栏轮廓
-    contours_purple, _ = cv2.findContours(mask_purple, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-    if contours_purple:
-        # 找到最大的紫色区域（围栏）
-        largest_purple_contour = max(contours_purple, key=cv2.contourArea)
-        purple_area = cv2.contourArea(largest_purple_contour)
+    
+                
+    #  检测围栏内的指定颜色区域（红色或蓝色安全区）
+    # 加载安全区颜色配置
+    color_config = load_color(safe_zone_color)
             
-        if purple_area > 1000:  # 安全区围栏应该有较大面积
-            # 创建围栏区域的掩码（只保留围栏内的区域）
-            fence_mask = np.zeros(frame.shape[:2], dtype=np.uint8)
-            cv2.drawContours(fence_mask, [largest_purple_contour], -1, 255, -1)
+    # 根据配置类型创建掩码
+    if color_config["is_double_range"]:
+        # 双区间处理（如红色）
+        lower1 = np.array(color_config["range1"]["lower"])
+        upper1 = np.array(color_config["range1"]["upper"])
+        mask1 = cv2.inRange(hsv, lower1, upper1)
                 
-            # 2. 检测围栏内的指定颜色区域（红色或蓝色安全区）
-            # 加载安全区颜色配置
-            color_config = load_color(safe_zone_color)
-            
-            # 根据配置类型创建掩码
-            if color_config["is_double_range"]:
-                # 双区间处理（如红色）
-                lower1 = np.array(color_config["range1"]["lower"])
-                upper1 = np.array(color_config["range1"]["upper"])
-                mask1 = cv2.inRange(hsv, lower1, upper1)
+        lower2 = np.array(color_config["range2"]["lower"])
+        upper2 = np.array(color_config["range2"]["upper"])
+        mask2 = cv2.inRange(hsv, lower2, upper2)
                 
-                lower2 = np.array(color_config["range2"]["lower"])
-                upper2 = np.array(color_config["range2"]["upper"])
-                mask2 = cv2.inRange(hsv, lower2, upper2)
+        # 合并两个区间的掩码
+        mask_color = cv2.bitwise_or(mask1, mask2)
+    else:
+        # 单区间处理
+        lower_color = np.array(color_config["lower"])
+        upper_color = np.array(color_config["upper"])
+        mask_color = cv2.inRange(hsv, lower_color, upper_color)
                 
-                # 合并两个区间的掩码
-                mask_color = cv2.bitwise_or(mask1, mask2)
-            else:
-                # 单区间处理
-                lower_color = np.array(color_config["lower"])
-                upper_color = np.array(color_config["upper"])
-                mask_color = cv2.inRange(hsv, lower_color, upper_color)
+    # 只保留围栏内的颜色区域
+    mask_color_inside_fence = cv2.bitwise_and(mask_color, mask_color, mask=fence_mask)
                 
-            # 只保留围栏内的颜色区域
-            mask_color_inside_fence = cv2.bitwise_and(mask_color, mask_color, mask=fence_mask)
+    # 形态学操作 - 去除噪声
+    mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_OPEN, kernel)
+    mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_CLOSE, kernel)
                 
-            # 形态学操作 - 去除噪声
-            mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_OPEN, kernel)
-            mask_color_inside_fence = cv2.morphologyEx(mask_color_inside_fence, cv2.MORPH_CLOSE, kernel)
+    # 寻找颜色区域轮廓
+    contours_color, _ = cv2.findContours(mask_color_inside_fence, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 
-            # 寻找颜色区域轮廓
-            contours_color, _ = cv2.findContours(mask_color_inside_fence, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                
-            if contours_color:
-                # 找到最大的颜色区域
-                largest_color_contour = max(contours_color, key=cv2.contourArea)
-                color_area = cv2.contourArea(largest_color_contour)
+    if contours_color:
+        # 找到最大的颜色区域
+        largest_color_contour = max(contours_color, key=cv2.contourArea)
+        color_area = cv2.contourArea(largest_color_contour)
                     
-                # 检查颜色区域是否足够大
-                if color_area > 200:  # 可根据实际情况调整
-                    # 计算颜色区域的中心点（即安全区中心点）
-                    M = cv2.moments(largest_color_contour)
-                    if M["m00"] != 0:
-                        cx = int(M["m10"] / M["m00"])
-                        cy = int(M["m01"] / M["m00"])
+    # 检查颜色区域是否足够大
+    if color_area > 200:  # 可根据实际情况调整
+    # 计算颜色区域的中心点（即安全区中心点）
+        M = cv2.moments(largest_color_contour)
+        if M["m00"] != 0:
+            cx = int(M["m10"] / M["m00"])
+            cy = int(M["m01"] / M["m00"])
                             
-                        return (cx, cy)  # 只返回两个值：x, y
+            return (cx, cy)  # 只返回两个值：x, y
         
     return None  # 或者返回 (0, 0)
         
