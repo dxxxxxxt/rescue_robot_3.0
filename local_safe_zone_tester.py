@@ -31,7 +31,7 @@ def main():
     print("按 '2' 切换到蓝色安全区检测")
     print("按 '3' 同时检测两种安全区")
     
-    current_mode = 3  # 默认同时检测两种安全区
+    current_mode =  1  # 默认同时检测两种安全区
     
     try:
         while True:
@@ -67,22 +67,53 @@ def main():
                 red_safe_zone = vision.find_safe_zone(frame, "red")
                 if red_safe_zone:
                     safe_zones.append((red_safe_zone, "red"))
+                    # 打印红色安全区坐标
+                    if len(red_safe_zone) == 6:
+                        cx, cy, rect_x, rect_y, rect_w, rect_h = red_safe_zone
+                        print(f"检测到红色安全区: 中心点({cx}, {cy}), 矩形区域({rect_x}, {rect_y}, {rect_w}, {rect_h})")
+                    elif len(red_safe_zone) == 2:
+                        x, y = red_safe_zone
+                        print(f"检测到红色安全区: 坐标({x}, {y})")
                     
             if current_mode in [2, 3]:
                 # 检测蓝色安全区
                 blue_safe_zone = vision.find_safe_zone(frame, "blue")
                 if blue_safe_zone:
                     safe_zones.append((blue_safe_zone, "blue"))
+                    # 打印蓝色安全区坐标
+                    if len(blue_safe_zone) == 6:
+                        cx, cy, rect_x, rect_y, rect_w, rect_h = blue_safe_zone
+                        print(f"检测到蓝色安全区: 中心点({cx}, {cy}), 矩形区域({rect_x}, {rect_y}, {rect_w}, {rect_h})")
+                    elif len(blue_safe_zone) == 2:
+                        x, y = blue_safe_zone
+                        print(f"检测到蓝色安全区: 坐标({x}, {y})")
             
             # 在原始画面上标记安全区
-            for (x, y), color in safe_zones:
+            for safe_zone, color in safe_zones:
                 color_bgr = (0, 0, 255) if color == "red" else (255, 0, 0)
-                cv2.circle(frame, (x, y), 10, color_bgr, -1)
-                cv2.putText(frame, f"{color} safe zone", (x - 60, y - 20), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, color_bgr, 2)
                 
-                # 在掩码图像上也标记安全区
-                cv2.circle(mask_display, (x, y), 10, color_bgr, -1)
+                if len(safe_zone) == 6:  # 新的返回格式：cx, cy, rect_x, rect_y, rect_w, rect_h
+                    cx, cy, rect_x, rect_y, rect_w, rect_h = safe_zone
+                    # 绘制矩形边框
+                    cv2.rectangle(frame, (rect_x, rect_y), (rect_x + rect_w, rect_y + rect_h), color_bgr, 2)
+                    # 在中心绘制小圆点
+                    cv2.circle(frame, (cx, cy), 5, color_bgr, -1)
+                    # 在中心位置显示文字
+                    cv2.putText(frame, f"{color} safe zone", (cx - 60, rect_y - 20), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.7, color_bgr, 2)
+                    
+                    # 在掩码图像上也标记安全区矩形
+                    cv2.rectangle(mask_display, (rect_x, rect_y), (rect_x + rect_w, rect_y + rect_h), color_bgr, 2)
+                    cv2.circle(mask_display, (cx, cy), 5, color_bgr, -1)
+                elif len(safe_zone) == 2:  # 兼容旧的返回格式：x, y
+                    x, y = safe_zone
+                    # 绘制圆形（兼容旧版本）
+                    cv2.circle(frame, (x, y), 10, color_bgr, -1)
+                    cv2.putText(frame, f"{color} safe zone", (x - 60, y - 20), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.7, color_bgr, 2)
+                    
+                    # 在掩码图像上也标记安全区
+                    cv2.circle(mask_display, (x, y), 10, color_bgr, -1)
             
             # 显示图像
             cv2.imshow("摄像头画面 - 安全区检测", frame)
