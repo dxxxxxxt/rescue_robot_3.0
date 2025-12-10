@@ -73,7 +73,7 @@ def find_balls(frame, color_name):
             if perimeter > 0:
                 circularity = 4 * np.pi * area / (perimeter * perimeter)
                 # 可调试输出
-                print(f"area={area:.1f}, radius={radius:.1f}, circularity={circularity:.2f}")
+                # print(f"area={area:.1f}, radius={radius:.1f}, circularity={circularity:.2f}")
                 # 半径范围和圆形度筛选
                 if circularity > 0.65 and 5 < radius :  #放开半径的上限60
                     balls.append((int(x), int(y), int(radius)))
@@ -83,9 +83,11 @@ def find_balls(frame, color_name):
 
 # 寻找安全区
 
-# 安全区识别：
+# 安全区识别(旧版本）：
 # 1. 检测紫色围栏，当识别到大面积紫色区域时，判断它为安全区
 # 2. 检测紫色围栏里面的长方形颜色，当识别到长方形颜色与队伍颜色一致时，判断它为己方安全区
+# 新版本：
+# 直接识别安全区里面的颜色，当面积大于某个值判断为安全区
 
 def find_safe_zones(frame, safe_zone_color, min_area=2000):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
