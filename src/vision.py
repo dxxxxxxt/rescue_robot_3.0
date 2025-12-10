@@ -73,7 +73,7 @@ def find_balls(frame, color_name):
             if perimeter > 0:
                 circularity = 4 * np.pi * area / (perimeter * perimeter)
                 # 可调试输出
-                # print(f"area={area:.1f}, radius={radius:.1f}, circularity={circularity:.2f}")
+                print(f"area={area:.1f}, radius={radius:.1f}, circularity={circularity:.2f}")
                 # 半径范围和圆形度筛选
                 if circularity > 0.65 and 5 < radius :  #放开半径的上限60
                     balls.append((int(x), int(y), int(radius)))

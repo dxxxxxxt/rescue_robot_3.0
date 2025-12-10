@@ -15,7 +15,8 @@ if not cap.isOpened():
 
 # 创建窗口和滑动条
 window_name = '黑色小球阈值调整'
-cv2.namedWindow(window_name)
+cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)  # 设置窗口可调整大小
+cv2.resizeWindow(window_name, 600, 400)  # 设置合适的初始窗口大小
 
 # 黑色在HSV中：H和S范围较宽，V值较低
 initial_values = {
@@ -84,6 +85,8 @@ def print_thresholds():
     print(f"Lower: [{h_min}, {s_min}, {v_min}]")
     print(f"Upper: [{h_max}, {s_max}, {v_max}]")
 
+
+
 # 加载保存的配置
 load_thresholds()
 
@@ -98,7 +101,7 @@ while True:
     ret, frame = cap.read()
     if not ret:
         continue
-
+    frame = cv2.flip(frame, 0)
     # 获取当前阈值
     h_min = cv2.getTrackbarPos('H Min', window_name)
     s_min = cv2.getTrackbarPos('S Min', window_name)
@@ -118,6 +121,9 @@ while True:
     kernel = np.ones((3, 3), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    
+    # # 反转掩码，使黑色小球在掩码中显示为白色，便于观察
+    # mask = cv2.bitwise_not(mask)
     
     result = cv2.bitwise_and(frame, frame, mask=mask)
 
