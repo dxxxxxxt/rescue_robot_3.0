@@ -8,8 +8,8 @@
     "H Max": 180
   },
   "common": {
-    "S Min": 115,
-    "V Min": 70,
+    "S Min": 88,
+    "V Min": 59,
     "S Max": 255,
     "V Max": 255
   }
