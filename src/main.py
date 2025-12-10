@@ -21,8 +21,7 @@ camera_id = config["camera"]["device_id"]
 
 #初始化变量
 first_grab = True     # 是否是第一次抓取
-has_yellow = False    # 是否已经抓了黄球
-cmd = "0"
+cmd = "0"  # 初始命令
 
 # 初始化摄像头和串口
 cap = cv2.VideoCapture(camera_id)
@@ -44,13 +43,17 @@ try:
         cmd = UART.read_ecu_command()
         
         print(f"收到指令: cmd={cmd}")
-    
+        
         ret, frame = cap.read()
         
         if not ret:
             print("读取帧失败")
             time.sleep(0.1)
             break
+       
+        
+        # 翻转图像（解决画面倒置问题）
+        frame = cv2.flip(frame, 0)  # 0=垂直翻转（上下颠倒）
     
         # 重置变量
         target_found = False
@@ -60,7 +63,7 @@ try:
             # 找红球
             balls = vision.find_balls(frame, "red")
             if balls:
-                x, y, r = balls[0]
+                x, y, r = max(balls, key=lambda b: b[2])
                 dx, dy = vision.calculate_offset(x, y)
                 raw_dist = vision.calculate_distance(r)
                 dist = vision.smooth_distance(raw_dist)
@@ -72,7 +75,7 @@ try:
             # 找蓝球
             balls = vision.find_balls(frame, "blue")
             if balls:
-                x, y, r = balls[0]
+                x, y, r = max(balls, key=lambda b: b[2])
                 dx, dy = vision.calculate_offset(x, y)
                 raw_dist = vision.calculate_distance(r)
                 dist = vision.smooth_distance(raw_dist)
@@ -82,37 +85,37 @@ try:
                 print(f"找到蓝球: dx={dx}, dy={dy}, dist={dist}")
         elif cmd == "3" :
             # 处理红安全区
-            safe_zone = vision.find_safe_zone(frame, "red")  
-            if safe_zone:
-                x, y = safe_zone  
+            centers = vision.find_safe_zones(frame, "red")
+            if centers:
+                x, y = centers[0]  # 取第一个安全区中心
                 dx, dy = vision.calculate_offset(x, y)
                 UART.send_data(dx, dy, 0)
                 time.sleep(0.1)
                 target_found = True
                 print(f"找到红安全区: dx={dx}, dy={dy}")
-                if first_grab:
-                    first_grab = False
-                    print("第一次抓取完成，切换到多目标识别模式")
+            if first_grab:
+                first_grab = False
+                print("第一次抓取完成，切换到多目标识别模式")
         elif cmd == "4" :
             # 处理蓝安全区
-            safe_zone = vision.find_safe_zone(frame, "blue")  
-            if safe_zone:
-                x, y = safe_zone  
+            centers = vision.find_safe_zones(frame, "blue")
+            if centers:
+                x, y = centers[0]  # 取第一个安全区中心
                 dx, dy = vision.calculate_offset(x, y)
                 UART.send_data(dx, dy, 0)
                 time.sleep(0.1)
                 target_found = True
-                print(f"找到蓝安全区: dx={dx}, dy={dy}")
-                if first_grab:
-                    first_grab = False
-                    print("第一次抓取完成，切换到多目标识别模式")
+                print(f"找到红安全区: dx={dx}, dy={dy}")
+            if first_grab:
+                first_grab = False
+                print("第一次抓取完成，切换到多目标识别模式")
         elif not first_grab:
             # 尝试识别各种颜色的小球
             colors_to_check = ["red", "blue", "yellow", "black"]
             for color in colors_to_check:
                 balls = vision.find_balls(frame, color)
                 if balls:
-                    x, y, r = balls[0]
+                    x, y, r = max(balls, key=lambda b: b[2])
                     dx, dy = vision.calculate_offset(x, y)
                     raw_dist = vision.calculate_distance(r)
                     dist = vision.smooth_distance(raw_dist)
@@ -129,10 +132,10 @@ try:
             
 except KeyboardInterrupt:
     print("\n用户中断")
-# except Exception as e:
-#     print(f"程序出错: {e}")
-#     import traceback
-#     traceback.print_exc()  # 添加了堆栈跟踪
+except Exception as e:
+    print(f"程序出错: {e}")
+    import traceback
+    traceback.print_exc()  # 添加了堆栈跟踪
 finally:
     cap.release()
     UART.close_serial()

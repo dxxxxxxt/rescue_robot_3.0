@@ -4,12 +4,12 @@
     "H Max": 10
   },
   "range2": {
-    "H Min": 169,
+    "H Min": 170,
     "H Max": 180
   },
   "common": {
-    "S Min": 100,
-    "V Min": 100,
+    "S Min": 115,
+    "V Min": 70,
     "S Max": 255,
     "V Max": 255
   }
