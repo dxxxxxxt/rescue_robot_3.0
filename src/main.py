@@ -52,7 +52,7 @@ try:
                 print(f"找到红球: dx={dx}, dy={dy}, dist={dist}")
 
         elif cmd == "2":
-            # 找蓝球（先屏蔽安全区）
+            # 找蓝球
             
             balls = vision.find_balls(frame, "blue")
             if balls:
