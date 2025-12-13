@@ -49,12 +49,14 @@ try:
                 UART.send_data(dx, dy, dist)
                 time.sleep(0.1)
                 target_found = True
-                print(f"找到红球(安全区已排除): dx={dx}, dy={dy}, dist={dist}")
+                print(f"找到红球: dx={dx}, dy={dy}, dist={dist}")
 
         elif cmd == "2":
-            # 找蓝球
-            
-            balls = vision.find_balls(frame, "blue")
+            # 找蓝球（先屏蔽安全区）
+            safe_mask = vision.find_safe_zone_mask(frame, "blue")
+            masked_frame = frame.copy()
+            masked_frame[safe_mask > 0] = 0
+            balls = vision.find_balls(masked_frame, "blue")
             if balls:
                 x, y, r = max(balls, key=lambda b: b[2])
                 dx, dy = vision.calculate_offset(x, y)
@@ -63,7 +65,7 @@ try:
                 UART.send_data(dx, dy, dist)
                 time.sleep(0.1)
                 target_found = True
-                print(f"找到蓝球(安全区已排除): dx={dx}, dy={dy}, dist={dist}")
+                print(f"找到蓝球: dx={dx}, dy={dy}, dist={dist}")
 
         elif cmd == "3":
             centers = vision.find_safe_zones(frame, "red")
@@ -95,8 +97,10 @@ try:
             colors_to_check = ["red", "blue", "yellow", "black"]
             for color in colors_to_check:
                 if color in ["red", "blue"]:
-                    
-                    balls = vision.find_balls(frame, color)
+                    safe_mask = vision.find_safe_zone_mask(frame, color)
+                    masked_frame = frame.copy()
+                    masked_frame[safe_mask > 0] = 0
+                    balls = vision.find_balls(masked_frame, color)
                 else:
                     balls = vision.find_balls(frame, color)
                 if balls:
