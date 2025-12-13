@@ -1,5 +1,5 @@
 import serial
-import time
+
 
 ser = serial.Serial('/dev/ttyS3', 115200)
 print("串口已初始化并打开")
