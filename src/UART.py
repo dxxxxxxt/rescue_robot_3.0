@@ -13,7 +13,7 @@ def read_ecu_command():
             return None
         
         if ser.in_waiting > 0:
-            cmd = ser.read(ser.in_waiting).decode('utf-8').strip()
+            cmd = ser.read(1).decode('utf-8').strip()  # 读取一个字节
             print(f"收到电控信号: {cmd}")
             return cmd
         return None
