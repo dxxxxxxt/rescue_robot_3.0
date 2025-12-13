@@ -38,11 +38,9 @@ try:
         target_found = False
 
         if cmd == "1":
-            # 找红球（先屏蔽安全区）
-            safe_mask = vision.find_safe_zone_mask(frame, "red")
-            masked_frame = frame.copy()
-            masked_frame[safe_mask > 0] = 0
-            balls = vision.find_balls(masked_frame, "red")
+            # 找红球
+            
+            balls = vision.find_balls(frame, "red")
             if balls:
                 x, y, r = max(balls, key=lambda b: b[2])
                 dx, dy = vision.calculate_offset(x, y)
@@ -54,11 +52,9 @@ try:
                 print(f"找到红球(安全区已排除): dx={dx}, dy={dy}, dist={dist}")
 
         elif cmd == "2":
-            # 找蓝球（先屏蔽安全区）
-            safe_mask = vision.find_safe_zone_mask(frame, "blue")
-            masked_frame = frame.copy()
-            masked_frame[safe_mask > 0] = 0
-            balls = vision.find_balls(masked_frame, "blue")
+            # 找蓝球
+            
+            balls = vision.find_balls(frame, "blue")
             if balls:
                 x, y, r = max(balls, key=lambda b: b[2])
                 dx, dy = vision.calculate_offset(x, y)
@@ -95,14 +91,12 @@ try:
                 print("第一次抓取完成，切换到多目标识别模式")
 
         elif not first_grab:
-            # 多色球识别（如果安全区需要屏蔽，可以仿照上面的使用 safe_zone_mask）
+            # 多色球识别
             colors_to_check = ["red", "blue", "yellow", "black"]
             for color in colors_to_check:
                 if color in ["red", "blue"]:
-                    safe_mask = vision.find_safe_zone_mask(frame, color)
-                    masked_frame = frame.copy()
-                    masked_frame[safe_mask > 0] = 0
-                    balls = vision.find_balls(masked_frame, color)
+                    
+                    balls = vision.find_balls(frame, color)
                 else:
                     balls = vision.find_balls(frame, color)
                 if balls:
