@@ -76,7 +76,7 @@ if __name__ == '__main__':
     #  将下面IP地址改为发送端的IP地址
     # host, port
     host = '192.168.43.211'
-    port = 8000
+    port = 5000
 
     cap = cv2.VideoCapture(9)
 
