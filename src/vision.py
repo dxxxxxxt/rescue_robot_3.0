@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import json
+import os
 
 # 加载颜色配置
 # 缓存字典，避免重复加载配置文件
@@ -11,7 +12,7 @@ def load_color(color_name):
     if color_name in _color_config_cache:
         return _color_config_cache[color_name]
     try:
-        import os
+        
         # 使用绝对路径加载配置文件
         config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', f'hsv_thresholds_{color_name}.json')
         with open(config_path, 'r') as f:
@@ -92,9 +93,9 @@ def find_balls(frame, color_name):
             if perimeter > 0:
                 circularity = 4 * np.pi * area / (perimeter * perimeter)
                 # 可调试输出
-                print(f"area={area:.1f}, radius={radius:.1f}, circularity={circularity:.2f}")
+                # print(f"area={area:.1f}, radius={radius:.1f}, circularity={circularity:.2f}")
                 # 半径范围和圆形度筛选
-                if circularity > 0.75 and 5 < radius :  #放开半径的上限60
+                if circularity > 0.7 and 5 < radius :  #放开半径的上限60
                     balls.append((int(x), int(y), int(radius)))
     # 如果检测到多个球，可以选择面积最大的那个返回
     balls = sorted(balls, key=lambda b: b[2], reverse=True)  # 按半径降序排序
