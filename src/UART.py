@@ -1,7 +1,7 @@
 import serial
 
 
-ser = serial.Serial('/dev/ttyS3', 115200)
+ser = serial.Serial('/dev/ttyS3', 115200,timeout=0)
 print("串口已初始化并打开")
 
 def read_ecu_command():

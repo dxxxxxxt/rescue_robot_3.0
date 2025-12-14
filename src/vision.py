@@ -112,6 +112,7 @@ def find_safe_zones(frame, safe_zone_color=None, min_area=1000):
     先找紫色围栏，再判断围栏内部大面积颜色。
     返回所有符合条件安全区的中心点[(cx,cy), ...]
     """
+    
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
     # --- 1. 先找紫色围栏 ---  
@@ -188,8 +189,10 @@ def find_safe_zones(frame, safe_zone_color=None, min_area=1000):
                 # 计算内部安全区的中心点（相对于原始图像）
                 M = cv2.moments(inner_cnt)
                 if M["m00"] != 0:
+                    
                     cx = int(M["m10"] / M["m00"]) + x
                     cy = int(M["m01"] / M["m00"]) + y
+                   
                     centers.append((cx, cy))
     
     return centers
