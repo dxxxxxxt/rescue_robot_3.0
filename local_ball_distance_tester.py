@@ -69,7 +69,7 @@ def main():
             ret, frame = cap.read()
             if not ret:
                 print("读取帧失败")
-                break
+                continue
             
             # 翻转图像（解决画面倒置问题）
             if flip_image:
