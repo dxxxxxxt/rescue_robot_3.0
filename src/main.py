@@ -1,5 +1,4 @@
 import cv2
-import time
 import json
 import UART
 import vision
@@ -7,21 +6,17 @@ import vision
 with open('config/config.json', 'r') as f:
     config = json.load(f)
 
-team_color = config["team_color"]
-camera_id = config["camera"]["device_id"]
-
 first_grab = True
 
-
-cap = cv2.VideoCapture(camera_id)
+cap = cv2.VideoCapture(9)
 if not cap.isOpened():
-    print(f"摄像头 {camera_id} 打开失败")
+    print("摄像头打开失败")
     exit(1)
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-print(f"队伍: {team_color}, 开始!!!!!!!!!!!!")
+print(" 开始!!!!!!!!!!!!")
 print("等待电控指令.........................................")
 
 try:
@@ -31,15 +26,13 @@ try:
         ret, frame = cap.read()
         if not ret:
             print("读取帧失败")
-            time.sleep(0.1)
-            break
+            continue
         frame = cv2.flip(frame, 0)
 
         target_found = False
 
         if cmd == "1":
             # 找红球
-            
             balls = vision.find_balls(frame, "red")
             if balls:
                 x, y, r = max(balls, key=lambda b: b[2])
@@ -47,13 +40,11 @@ try:
                 raw_dist = vision.calculate_distance(r)
                 dist = vision.smooth_distance(raw_dist)
                 UART.send_data(dx, dy, dist)
-                time.sleep(0.1)
                 target_found = True
                 print(f"找到红球: dx={dx}, dy={dy}, dist={dist}")
 
         elif cmd == "2":
             # 找蓝球
-            
             balls = vision.find_balls(frame, "blue")
             if balls:
                 x, y, r = max(balls, key=lambda b: b[2])
@@ -61,7 +52,6 @@ try:
                 raw_dist = vision.calculate_distance(r)
                 dist = vision.smooth_distance(raw_dist)
                 UART.send_data(dx, dy, dist)
-                time.sleep(0.1)
                 target_found = True
                 print(f"找到蓝球: dx={dx}, dy={dy}, dist={dist}")
 
@@ -71,7 +61,6 @@ try:
                 x, y = centers[0]
                 dx, dy = vision.calculate_offset(x, y)
                 UART.send_data(dx, dy, 0)
-                time.sleep(0.1)
                 target_found = True
                 print(f"找到红安全区: dx={dx}, dy={dy}")
             if first_grab:
@@ -83,7 +72,6 @@ try:
                 x, y = centers[0]
                 dx, dy = vision.calculate_offset(x, y)
                 UART.send_data(dx, dy, 0)
-                time.sleep(0.1)
                 target_found = True
                 print(f"找到蓝安全区: dx={dx}, dy={dy}")
             if first_grab:
@@ -95,7 +83,6 @@ try:
             colors_to_check = ["red", "blue", "yellow", "black"]
             for color in colors_to_check:
                 if color in ["red", "blue"]:
-                    
                     balls = vision.find_balls(frame, color)
                 else:
                     balls = vision.find_balls(frame, color)
@@ -105,22 +92,16 @@ try:
                     raw_dist = vision.calculate_distance(r)
                     dist = vision.smooth_distance(raw_dist)
                     UART.send_data(dx, dy, dist)
-                    time.sleep(0.1)
                     target_found = True
                     print(f"识别到{color}色小球: dx={dx}, dy={dy}, dist={dist}")
                     break
 
         if not target_found:
             UART.send_no_target()
-            time.sleep(0.1)
             print("未找到目标")
 
 except KeyboardInterrupt:
     print("\n用户中断")
-except Exception as e:
-    print(f"程序出错: {e}")
-    import traceback
-    traceback.print_exc()
 finally:
     cap.release()
     UART.close_serial()
